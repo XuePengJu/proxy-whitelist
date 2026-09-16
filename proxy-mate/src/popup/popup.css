@@ -138,6 +138,19 @@ body {
   padding: 2px 0;
 }
 
+/* Chrome 实际生效状态（v1.3.2） */
+.proxy-state {
+  font-size: 11px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
 .status-text.on {
   color: var(--accent);
   font-weight: 600;

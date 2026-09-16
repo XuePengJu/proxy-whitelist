@@ -33,12 +33,49 @@ function send(type, data = {}) {
 // --- 初始化 ---
 
 async function init() {
+  // 版本号动态取自 manifest，与扩展管理页保持一致
+  const manifest = chrome.runtime.getManifest();
+  document.getElementById("ext-version").textContent = "v" + manifest.version;
+
   const res = await send("GET_STATE");
   if (!res.success) return;
 
   currentSettings = res.settings;
   renderSettings(currentSettings);
   renderFileRules(res.fileRules || []);
+  readProxyState();
+}
+
+// --- 读取 Chrome 实际生效的代理状态 ---
+
+function readProxyState() {
+  const el = document.getElementById("proxy-state");
+  try {
+    chrome.proxy.settings.get({}, (d) => {
+      if (chrome.runtime.lastError || !d || !d.value) return;
+      const v = d.value;
+      const loc = d.levelOfControl || "";
+      let text = "Chrome 实际生效：";
+      if (v.mode === "pac_script" && v.pacScript && v.pacScript.data) {
+        text += "PAC 已应用（规则命中直连，其余走代理）";
+      } else if (v.mode === "fixed_servers") {
+        text += "固定代理已应用";
+      } else if (v.mode === "direct") {
+        text += "直连（未走任何代理）";
+      } else if (v.mode === "system") {
+        text += "系统代理";
+      } else {
+        text += v.mode || "未知";
+      }
+      if (loc === "controlled_by_other_extensions") {
+        text += " ⚠ 被其他扩展接管";
+      } else if (loc === "not_controllable") {
+        text += " ⚠ 被系统/管理员控制";
+      }
+      el.textContent = text;
+      el.hidden = false;
+    });
+  } catch (e) { /* 忽略 */ }
 }
 
 function renderSettings(settings) {

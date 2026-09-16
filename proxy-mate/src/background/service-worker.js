@@ -296,4 +296,4 @@ chrome.proxy.onProxyError.addListener((details) => {
   console.warn("[ProxyMate] 代理错误:", details.error, details.details);
 });
 
-console.log("[ProxyMate] Service Worker 已加载 (v1.1)");
+console.log(`[ProxyMate] Service Worker 已加载 (v${chrome.runtime.getManifest().version})`);
