@@ -37,6 +37,23 @@ async function setSettings(settings) {
   });
 }
 
+// --- 旧白名单数据迁移（v1.2） ---
+// 原「不走代理的域名」条目（bypassList 中非 <local> 项）统一并入 manualRules，
+// 之后只有一个数据源，避免两份数据。bypassList 仅保留内置 <local>。
+
+async function migrateLegacyBypass() {
+  const settings = await getSettings();
+  const legacy = (settings.bypassList || []).filter((b) => b !== "<local>");
+  if (!legacy.length) return settings;
+  const converted = legacy
+    .map((b) => Ruleset.normalizeEntry(b))
+    .filter((e) => !!e);
+  const merged = Ruleset.dedupe([...(settings.manualRules || []), ...converted]);
+  const newSettings = { ...settings, manualRules: merged, bypassList: ["<local>"] };
+  await setSettings(newSettings);
+  return newSettings;
+}
+
 // --- 规则文件读取 ---
 // 文件不存在 / 读取失败 → 返回空数组（规则集置空），不报错
 
@@ -52,7 +69,7 @@ async function loadFileRules() {
   }
 }
 
-// 合并全部规则：文件规则 + 手动规则 + 原白名单
+// 合并全部规则：文件规则 + 手动规则 + 内置 <local>（旧白名单已迁移合并）
 function collectEntries(settings, fileRules) {
   const entries = [];
   if (settings.fileRulesEnabled) entries.push(...fileRules);
@@ -157,6 +174,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await setSettings(DEFAULTS);
     await applyProxy(false);
   } else if (details.reason === "update") {
+    await migrateLegacyBypass();
     const settings = await getSettings();
     await applyProxy(settings.enabled);
   }
@@ -168,6 +186,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handle = async () => {
     switch (message.type) {
       case "GET_STATE": {
+        // 迁移旧白名单数据（一次性）
+        await migrateLegacyBypass();
         const settings = await getSettings();
         // 每次读取规则文件，若内容变化则自动重建生效（改文件后重开 Popup 即生效）
         const fileRules = await loadFileRules();
@@ -207,28 +227,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { success: true, settings: newSettings };
       }
 
-      // --- 白名单（保留原有） ---
-      case "ADD_BYPASS": {
-        const settings = await getSettings();
-        const domain = normalizeDomain(message.domain);
-        if (!domain || settings.bypassList.includes(domain)) {
-          return { success: false, error: "域名已存在或格式无效" };
-        }
-        const newBypassList = [...settings.bypassList, domain];
-        await setSettings({ ...settings, bypassList: newBypassList });
-        if (settings.enabled) await applyProxy(true);
-        return { success: true, bypassList: newBypassList };
-      }
-
-      case "REMOVE_BYPASS": {
-        const settings = await getSettings();
-        const newBypassList = settings.bypassList.filter(d => d !== message.domain);
-        await setSettings({ ...settings, bypassList: newBypassList });
-        if (settings.enabled) await applyProxy(true);
-        return { success: true, bypassList: newBypassList };
-      }
-
-      // --- 规则集（v1.1） ---
+      // --- 规则集（v1.1+） ---
       case "ADD_RULES": {
         // 输入框多行添加
         const settings = await getSettings();
@@ -281,18 +280,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true; // 异步响应
 });
-
-// --- 工具函数 ---
-
-function normalizeDomain(raw) {
-  const trimmed = raw.trim().toLowerCase();
-  if (!trimmed) return "";
-  // 自动将 .example.com 转为 *.example.com
-  if (trimmed.startsWith(".") && !trimmed.startsWith("*")) {
-    return "*" + trimmed;
-  }
-  return trimmed;
-}
 
 // --- 代理错误监听 ---
 

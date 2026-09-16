@@ -10,9 +10,6 @@ const els = {
   host: document.getElementById("proxy-host"),
   port: document.getElementById("proxy-port"),
   btnSave: document.getElementById("btn-save"),
-  bypassInput: document.getElementById("bypass-input"),
-  btnAdd: document.getElementById("btn-add"),
-  bypassList: document.getElementById("bypass-list"),
   // 规则集
   fileRuleCard: document.getElementById("file-rule-card"),
   fileRuleMeta: document.getElementById("file-rule-meta"),
@@ -58,9 +55,6 @@ function renderSettings(settings) {
   els.scheme.value = settings.scheme;
   els.host.value = settings.host;
   els.port.value = settings.port;
-
-  // 白名单
-  renderBypassList(settings.bypassList);
 
   // 规则集开关
   els.fileRulesToggle.checked = settings.fileRulesEnabled !== false;
@@ -129,27 +123,7 @@ function renderManualList(list) {
   }
 }
 
-// --- 白名单渲染（原有） ---
-
-function renderBypassList(list) {
-  els.bypassList.innerHTML = "";
-
-  if (!list || list.length === 0) {
-    els.bypassList.innerHTML = `<div class="bypass-empty">暂无白名单域名</div>`;
-    return;
-  }
-
-  for (const domain of list) {
-    const tag = document.createElement("div");
-    tag.className = "bypass-tag";
-    tag.innerHTML = `
-      <span>${escapeHtml(domain)}</span>
-      <button class="remove" title="删除" data-domain="${escapeHtml(domain)}">&times;</button>
-    `;
-    tag.querySelector(".remove").addEventListener("click", () => removeBypass(domain));
-    els.bypassList.appendChild(tag);
-  }
-}
+// --- 白名单渲染已合并进手动规则（v1.2） ---
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -195,34 +169,7 @@ els.btnSave.addEventListener("click", async () => {
   }
 });
 
-// 添加白名单（原有）
-async function addBypass() {
-  const raw = els.bypassInput.value.trim();
-  if (!raw) return;
-
-  const res = await send("ADD_BYPASS", { domain: raw });
-  if (res.success) {
-    els.bypassInput.value = "";
-    currentSettings = { ...currentSettings, bypassList: res.bypassList };
-    renderBypassList(res.bypassList);
-  } else {
-    showToast(res.error || "添加失败");
-  }
-}
-
-els.btnAdd.addEventListener("click", addBypass);
-els.bypassInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addBypass();
-});
-
-// 删除白名单
-async function removeBypass(domain) {
-  const res = await send("REMOVE_BYPASS", { domain });
-  if (res.success) {
-    currentSettings = { ...currentSettings, bypassList: res.bypassList };
-    renderBypassList(res.bypassList);
-  }
-}
+// 添加白名单已合并：使用规则集入口（v1.2）
 
 // --- 规则集事件 ---
 

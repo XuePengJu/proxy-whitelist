@@ -10,6 +10,9 @@
 #
 # 修改后保存并推送，插件会在下次打开弹窗时自动生效
 
+# 自定义域名
+clickscope.in
+
 # ===== 百度 =====
 baidu.com
 bdstatic.com

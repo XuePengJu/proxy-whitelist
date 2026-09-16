@@ -100,24 +100,6 @@ baidu.com（含子域）/ =example.com（仅本域）
         <div class="bypass-empty">暂无手动规则</div>
       </div>
     </div>
-
-    <!-- 域名白名单 -->
-    <div class="bypass-section">
-      <div class="section-title">不走代理的域名</div>
-      <div class="input-group">
-        <input type="text" id="bypass-input" placeholder="输入域名，如 baidu.com" maxlength="128">
-        <button class="btn-add" id="btn-add" title="添加">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="bypass-hint">支持格式: baidu.com / *.baidu.com / 192.168.1.0/24 / &lt;local&gt;</div>
-      <div class="bypass-list" id="bypass-list">
-        <!-- 动态生成 -->
-      </div>
-    </div>
   </div>
 
   <script src="popup.js"></script>
