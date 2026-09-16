@@ -156,6 +156,25 @@ body {
 
 .btn-row {
   display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-ghost {
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .btn-import {
@@ -235,6 +254,18 @@ body {
 .rule-item .remove:hover {
   color: var(--danger);
   background: #fee2e2;
+}
+
+/* 来源徽标 */
+.src-tag {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.src-manual {
+  color: #6366f1;
+  font-weight: 700;
+  opacity: 1;
 }
 
 .empty {

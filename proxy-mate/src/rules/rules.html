@@ -40,25 +40,19 @@
       </div>
       <div class="hint">支持格式：baidu.com（含子域）/ =example.com（仅本域）/ *.baidu.com（通配）/ 223.5.5.0/24 / 114.114.114.114；支持一次粘贴多行</div>
       <div class="btn-row">
+        <button class="btn-ghost" id="btn-copy">📋 复制完整清单</button>
         <button class="btn-ghost btn-import" id="btn-import">📥 导入文件（.txt / Clash YAML / .list / .json）</button>
         <input type="file" id="file-input" accept=".txt,.yaml,.yml,.list,.json" hidden>
       </div>
+      <div class="hint" id="copy-hint" style="display:none;color:#059669;">已复制，可粘贴到 proxy-mate/rules/cn-direct.txt 保存统一管理</div>
     </div>
 
-    <!-- 文件规则（只读，来源 rules/cn-direct.txt） -->
+    <!-- 全部规则 -->
     <div class="card">
-      <div class="section-title">文件规则 <span class="src-badge">rules/cn-direct.txt</span></div>
-      <div class="meta" id="file-meta">读取中…</div>
-      <div class="rule-list" id="file-list">
+      <div class="section-title">全部规则 <span class="count-badge" id="total-count">0 条</span></div>
+      <div class="meta" id="list-meta">加载中…</div>
+      <div class="rule-list" id="rule-list">
         <div class="empty">加载中…</div>
-      </div>
-    </div>
-
-    <!-- 手动规则（可删除） -->
-    <div class="card">
-      <div class="section-title">手动规则 <span class="count-badge" id="manual-count">0 条</span></div>
-      <div class="rule-list tags-list" id="manual-list">
-        <div class="empty">暂无手动规则</div>
       </div>
     </div>
   </div>

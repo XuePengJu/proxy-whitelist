@@ -77,6 +77,9 @@ function renderFileRules(fileRules) {
   const meta = els.fileRuleMeta;
   const hint = els.fileRuleHint;
 
+  // 合计条数（文件 + 手动）
+  els.manualCount.textContent = `${fileRules.length + (currentSettings.manualRules || []).length} 条`;
+
   if (currentSettings.fileRulesEnabled === false) {
     meta.textContent = "已停用（可在下方重新开启）";
     meta.className = "file-rule-meta warn";

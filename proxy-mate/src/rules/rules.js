@@ -1,18 +1,22 @@
 // ============================================================
 // ProxyMate - 规则管理页逻辑
-// 显示全部规则（文件规则 + 手动规则），支持添加/删除/导入
+// 全部规则统一列表（文件规则 + 手动规则），支持添加/删除/导入/复制
 // ============================================================
 
 const els = {
   ruleInput: document.getElementById("rule-input"),
   btnAdd: document.getElementById("btn-add"),
+  btnCopy: document.getElementById("btn-copy"),
+  copyHint: document.getElementById("copy-hint"),
   btnImport: document.getElementById("btn-import"),
   fileInput: document.getElementById("file-input"),
-  fileMeta: document.getElementById("file-meta"),
-  fileList: document.getElementById("file-list"),
-  manualList: document.getElementById("manual-list"),
-  manualCount: document.getElementById("manual-count")
+  listMeta: document.getElementById("list-meta"),
+  ruleList: document.getElementById("rule-list"),
+  totalCount: document.getElementById("total-count")
 };
+
+let currentFileRules = [];
+let currentManualRules = [];
 
 // --- 消息发送 ---
 
@@ -29,58 +33,64 @@ function send(type, data = {}) {
 async function init() {
   const res = await send("GET_STATE");
   if (!res.success) return;
-  renderFileRules(res.fileRules || []);
-  renderManualRules(res.settings.manualRules || []);
+  currentFileRules = res.fileRules || [];
+  currentManualRules = res.settings.manualRules || [];
+  renderAll();
   if (res.settings.lastError) showToast(res.settings.lastError, 4000);
 }
 
-// --- 渲染文件规则（只读） ---
+// --- 渲染全部规则（文件规则 + 手动规则，去重合并，来源标记） ---
 
-function renderFileRules(fileRules) {
-  const meta = els.fileMeta;
-  const list = els.fileList;
+function renderAll() {
+  const list = els.ruleList;
   list.innerHTML = "";
 
-  if (!fileRules || fileRules.length === 0) {
-    meta.textContent = "未找到规则或文件为空";
-    meta.className = "meta warn";
-    list.innerHTML = `<div class="empty">文件规则为空</div>`;
+  // 合并：手动规则覆盖同名文件规则（手动优先展示可删）
+  const manualMap = {};
+  for (const r of currentManualRules) manualMap[r.type + "|" + r.value] = r;
+
+  const items = [];
+  for (const r of currentFileRules) {
+    const key = r.type + "|" + r.value;
+    if (manualMap[key]) {
+      // 手动版展示（可删）
+      items.push({ label: r.type === "domain" ? "=" + r.value : r.value, source: "manual", rule: manualMap[key] });
+      delete manualMap[key];
+    } else {
+      items.push({ label: r.type === "domain" ? "=" + r.value : r.value, source: "file", rule: r });
+    }
+  }
+  for (const key in manualMap) {
+    const r = manualMap[key];
+    items.push({ label: r.type === "domain" ? "=" + r.value : r.value, source: "manual", rule: r });
+  }
+
+  const total = items.length;
+  els.totalCount.textContent = `${total} 条`;
+
+  if (!total) {
+    els.listMeta.textContent = "暂无规则，添加或导入后生效";
+    els.listMeta.className = "meta warn";
+    list.innerHTML = `<div class="empty">暂无规则</div>`;
     return;
   }
 
-  meta.textContent = `${fileRules.length} 条规则已加载 · 命中即直连不走代理`;
-  meta.className = "meta";
+  const fileCount = currentFileRules.length;
+  els.listMeta.textContent = `文件规则 ${fileCount} 条（📄 rules/cn-direct.txt）+ 手动 ${currentManualRules.length} 条 · 命中即直连`;
+  els.listMeta.className = "meta";
 
-  for (const rule of fileRules) {
-    const item = document.createElement("span");
-    item.className = "rule-item file";
-    item.textContent = rule.type === "domain" ? "=" + rule.value : rule.value;
-    list.appendChild(item);
-  }
-}
-
-// --- 渲染手动规则（可删除） ---
-
-function renderManualRules(list) {
-  const el = els.manualList;
-  el.innerHTML = "";
-  els.manualCount.textContent = `${list.length} 条`;
-
-  if (!list || list.length === 0) {
-    el.innerHTML = `<div class="empty">暂无手动规则</div>`;
-    return;
-  }
-
-  for (const rule of list) {
-    const item = document.createElement("span");
-    item.className = "rule-item";
-    const label = rule.type === "domain" ? "=" + rule.value : rule.value;
-    item.innerHTML = `
-      <span>${escapeHtml(label)}</span>
-      <button class="remove" title="删除">&times;</button>
-    `;
-    item.querySelector(".remove").addEventListener("click", () => removeRule(rule));
-    el.appendChild(item);
+  for (const item of items) {
+    const el = document.createElement("span");
+    el.className = "rule-item" + (item.source === "file" ? " file" : "");
+    const srcTag = item.source === "file" ? '<span class="src-tag">📄</span>' : '<span class="src-tag src-manual">✚</span>';
+    const removeBtn = item.source === "manual"
+      ? '<button class="remove" title="删除">&times;</button>'
+      : "";
+    el.innerHTML = `${srcTag}<span>${escapeHtml(item.label)}</span>${removeBtn}`;
+    if (item.source === "manual") {
+      el.querySelector(".remove").addEventListener("click", () => removeRule(item.rule));
+    }
+    list.appendChild(el);
   }
 }
 
@@ -88,6 +98,16 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+// --- 刷新数据（改动后统一重新拉取） ---
+
+async function refresh() {
+  const res = await send("GET_STATE");
+  if (!res.success) return;
+  currentFileRules = res.fileRules || [];
+  currentManualRules = res.settings.manualRules || [];
+  renderAll();
 }
 
 // --- 添加规则 ---
@@ -101,7 +121,8 @@ async function addRule() {
   const res = await send("ADD_RULES", { text });
   if (res.success) {
     els.ruleInput.value = "";
-    renderManualRules(res.manualRules);
+    currentManualRules = res.manualRules;
+    renderAll();
     showToast("已添加");
   } else {
     showToast(res.error || "添加失败");
@@ -118,11 +139,34 @@ els.ruleInput.addEventListener("keydown", (e) => {
 async function removeRule(rule) {
   const res = await send("REMOVE_RULE", { ruleType: rule.type, value: rule.value });
   if (res.success) {
-    renderManualRules(res.manualRules);
+    currentManualRules = res.manualRules;
+    renderAll();
   } else {
     showToast(res.error || "删除失败");
   }
 }
+
+// --- 复制完整规则清单 ---
+
+els.btnCopy.addEventListener("click", async () => {
+  const lines = [];
+  for (const r of currentFileRules) {
+    lines.push(r.type === "domain" ? "=" + r.value : r.value);
+  }
+  for (const r of currentManualRules) {
+    const line = r.type === "domain" ? "=" + r.value : r.value;
+    if (!lines.includes(line)) lines.push(line);
+  }
+  const text = lines.join("\n");
+  try {
+    await navigator.clipboard.writeText(text);
+    els.copyHint.style.display = "block";
+    showToast(`已复制 ${lines.length} 条规则`);
+    setTimeout(() => { els.copyHint.style.display = "none"; }, 3000);
+  } catch (e) {
+    showToast("复制失败，请手动选择");
+  }
+});
 
 // --- 导入文件 ---
 
@@ -136,7 +180,8 @@ els.fileInput.addEventListener("change", async (e) => {
   reader.onload = async (ev) => {
     const res = await send("IMPORT_RULES", { text: ev.target.result });
     if (res.success) {
-      renderManualRules(res.manualRules);
+      currentManualRules = res.manualRules;
+      renderAll();
       const st = res.stats || {};
       showToast(`已导入 ${file.name}（${res.format}）：新增 ${st.added} 条，重复 ${st.duplicate} 条，无效 ${st.skipped} 条`);
     } else {
