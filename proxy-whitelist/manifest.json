@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ClashMate",
-  "version": "1.2.1",
+  "version": "1.0.0",
   "description": "Clash 代理白名单开关：白名单内走代理，其余直连。支持输入网址或抓取页面域名，一键加入白名单（抓取期间全局代理）",
   "permissions": [
     "proxy",

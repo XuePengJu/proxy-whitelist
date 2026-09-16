@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ProxyMate",
-  "version": "1.3.2",
+  "version": "1.0.0",
   "description": "一键切换浏览器代理到本地 Clash，支持规则集（国内域名直连）与独立规则管理页",
   "permissions": [
     "proxy",
