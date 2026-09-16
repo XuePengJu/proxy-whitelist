@@ -196,3 +196,48 @@ sto.cn
 cctv.com
 xinhuanet.com
 people.com.cn
+
+# ===== AI 大模型（官网/控制台/网页端直连，避免被代理检测） =====
+# DeepSeek
+deepseek.com
+# 智谱 GLM
+bigmodel.cn
+zhipuai.cn
+chatglm.cn
+chatglm.com
+# Kimi 月之暗面
+kimi.com
+moonshot.cn
+# 字节豆包
+doubao.com
+# 阿里通义 / 千问 / 千问办公(QwenWork) / Qoder CN
+tongyi.com
+qianwen.com
+qwenwork.cn
+qoder.com.cn
+# 科大讯飞
+xfyun.cn
+iflytek.com
+# MiniMax 海螺
+minimax.chat
+minimaxi.com
+hailuoai.com
+# 阶跃星辰
+stepfun.com
+# 百川智能
+baichuan-ai.com
+# 零一万物
+01.ai
+lingyiwanwu.com
+# 昆仑万维 天工
+tiangong.cn
+# 快手可灵
+klingai.com
+# 秘塔
+metaso.cn
+# 硅基流动 / 魔搭
+siliconflow.cn
+modelscope.cn
+# 商汤 / 上海AI实验室
+sensetime.com
+intern-ai.org.cn
