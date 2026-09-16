@@ -64,7 +64,7 @@
       <button class="btn-save" id="btn-save">保存配置</button>
     </div>
 
-    <!-- 规则集：文件 + 手动（v1.1 新增） -->
+    <!-- 规则集：文件 + 手动（v1.1+） -->
     <div class="ruleset-section">
       <div class="section-title">国内域名直连规则集</div>
 
@@ -83,22 +83,10 @@
         <div class="file-rule-hint" id="file-rule-hint">编辑 proxy-mate/rules/cn-direct.txt 后重开本弹窗即生效</div>
       </div>
 
-      <!-- 手动输入 -->
-      <textarea id="rules-input" placeholder="每行一条规则，支持：
-baidu.com（含子域）/ =example.com（仅本域）
-223.5.5.0/24 / 114.114.114.114 / *.baidu.com"></textarea>
-      <div class="input-group">
-        <button class="btn-ghost" id="btn-add-rules">添加到规则集</button>
-        <button class="btn-ghost btn-import" id="btn-import">📥 导入文件</button>
-        <input type="file" id="file-input" accept=".txt,.yaml,.yml,.list,.json" hidden>
+      <div class="manual-summary">
+        手动规则 <span class="count-badge" id="manual-count">0 条</span>
       </div>
-      <div class="bypass-hint">文件导入支持 .txt / Clash YAML / .list / .json，自动识别格式，GEOIP 等自动跳过</div>
-
-      <!-- 手动规则列表 -->
-      <div class="sub-title">手动规则 <span class="count-badge" id="manual-count">0 条</span></div>
-      <div class="bypass-list" id="manual-list">
-        <div class="bypass-empty">暂无手动规则</div>
-      </div>
+      <button class="btn-save" id="btn-manage">管理全部规则 →</button>
     </div>
   </div>
 

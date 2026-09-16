@@ -242,7 +242,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "REMOVE_RULE": {
         const settings = await getSettings();
         const merged = (settings.manualRules || []).filter(
-          (e) => !(e.type === message.type && e.value === message.value)
+          (e) => !(e.type === message.ruleType && e.value === message.value)
         );
         await setSettings({ ...settings, manualRules: merged });
         if (settings.enabled) await applyProxy(true);

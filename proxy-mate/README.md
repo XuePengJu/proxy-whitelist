@@ -70,6 +70,10 @@ proxy-mate/
 │   │   ├── popup.html
 │   │   ├── popup.css
 │   │   └── popup.js
+│   ├── rules/
+│   │   ├── rules.html        # 独立规则管理页（v1.3）
+│   │   ├── rules.css
+│   │   └── rules.js
 │   └── utils/
 │       ├── proxy.js
 │       ├── storage.js

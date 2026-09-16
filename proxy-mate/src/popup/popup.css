@@ -496,6 +496,15 @@ body {
   margin: 4px 0 6px;
 }
 
+/* 手动规则摘要（v1.3） */
+.manual-summary {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 10px 0 8px;
+}
+
 .count-badge {
   margin-left: 6px;
   background: #eef2ff;

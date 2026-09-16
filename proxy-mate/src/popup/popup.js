@@ -1,6 +1,6 @@
 // ============================================================
-// ProxyMate - Popup 交互逻辑 (v1.1)
-// 新增：规则集（文件+手动）、文件导入
+// ProxyMate - Popup 交互逻辑 (v1.3)
+// 精简版：开关 + 配置 + 规则集摘要 + 规则管理页入口
 // ============================================================
 
 const els = {
@@ -11,16 +11,11 @@ const els = {
   port: document.getElementById("proxy-port"),
   btnSave: document.getElementById("btn-save"),
   // 规则集
-  fileRuleCard: document.getElementById("file-rule-card"),
   fileRuleMeta: document.getElementById("file-rule-meta"),
   fileRuleHint: document.getElementById("file-rule-hint"),
   fileRulesToggle: document.getElementById("file-rules-toggle"),
-  rulesInput: document.getElementById("rules-input"),
-  btnAddRules: document.getElementById("btn-add-rules"),
-  btnImport: document.getElementById("btn-import"),
-  fileInput: document.getElementById("file-input"),
-  manualList: document.getElementById("manual-list"),
-  manualCount: document.getElementById("manual-count")
+  manualCount: document.getElementById("manual-count"),
+  btnManage: document.getElementById("btn-manage")
 };
 
 let currentSettings = null;
@@ -56,9 +51,9 @@ function renderSettings(settings) {
   els.host.value = settings.host;
   els.port.value = settings.port;
 
-  // 规则集开关
+  // 规则集开关与手动规则条数
   els.fileRulesToggle.checked = settings.fileRulesEnabled !== false;
-  renderManualList(settings.manualRules || []);
+  els.manualCount.textContent = `${(settings.manualRules || []).length} 条`;
 
   // 代理错误提示
   if (settings.lastError) {
@@ -76,7 +71,7 @@ function updateStatusText(enabled) {
   }
 }
 
-// --- 规则文件渲染 ---
+// --- 规则文件状态渲染 ---
 
 function renderFileRules(fileRules) {
   const meta = els.fileRuleMeta;
@@ -98,32 +93,6 @@ function renderFileRules(fileRules) {
   meta.textContent = `${fileRules.length} 条规则已加载 · 命中即直连不走代理`;
   meta.className = "file-rule-meta ok";
 }
-
-// --- 手动规则渲染 ---
-
-function renderManualList(list) {
-  els.manualList.innerHTML = "";
-  els.manualCount.textContent = `${list.length} 条`;
-
-  if (!list || list.length === 0) {
-    els.manualList.innerHTML = `<div class="bypass-empty">暂无手动规则</div>`;
-    return;
-  }
-
-  for (const rule of list) {
-    const tag = document.createElement("div");
-    tag.className = "bypass-tag rules-tag";
-    const label = rule.type === "domain" ? "=" + rule.value : rule.value;
-    tag.innerHTML = `
-      <span>${escapeHtml(label)}</span>
-      <button class="remove" title="删除">&times;</button>
-    `;
-    tag.querySelector(".remove").addEventListener("click", () => removeRule(rule));
-    els.manualList.appendChild(tag);
-  }
-}
-
-// --- 白名单渲染已合并进手动规则（v1.2） ---
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -169,52 +138,15 @@ els.btnSave.addEventListener("click", async () => {
   }
 });
 
-// 添加白名单已合并：使用规则集入口（v1.2）
-
-// --- 规则集事件 ---
-
-// 添加手动规则（多行）
-async function addRules() {
-  const text = els.rulesInput.value.trim();
-  if (!text) {
-    showToast("请先输入规则");
-    return;
-  }
-  const res = await send("ADD_RULES", { text });
-  if (res.success) {
-    els.rulesInput.value = "";
-    currentSettings = { ...currentSettings, manualRules: res.manualRules };
-    renderManualList(res.manualRules);
-    showToast("已添加到规则集");
-  } else {
-    showToast(res.error || "添加失败");
-  }
-}
-
-els.btnAddRules.addEventListener("click", addRules);
-els.rulesInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) addRules();
-});
-
-// 删除手动规则
-async function removeRule(rule) {
-  const res = await send("REMOVE_RULE", { type: rule.type, value: rule.value });
-  if (res.success) {
-    currentSettings = { ...currentSettings, manualRules: res.manualRules };
-    renderManualList(res.manualRules);
-  }
-}
-
 // 文件规则开关
 els.fileRulesToggle.addEventListener("change", async () => {
   const enabled = els.fileRulesToggle.checked;
   const res = await send("TOGGLE_FILE_RULES", { enabled });
   if (res.success) {
     currentSettings = { ...currentSettings, fileRulesEnabled: res.fileRulesEnabled };
-    // 重新读取文件状态渲染
     const st = await send("GET_STATE");
     if (st.success) {
-      currentSettings = { ...currentSettings, ...st.settings, manualRules: currentSettings.manualRules };
+      currentSettings = st.settings;
       renderFileRules(st.fileRules || []);
     } else {
       renderFileRules([]);
@@ -225,34 +157,9 @@ els.fileRulesToggle.addEventListener("change", async () => {
   }
 });
 
-// 导入文件
-els.btnImport.addEventListener("click", () => els.fileInput.click());
-
-els.fileInput.addEventListener("change", async (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    const text = ev.target.result;
-    const res = await send("IMPORT_RULES", { text });
-    if (res.success) {
-      currentSettings = { ...currentSettings, manualRules: res.manualRules };
-      renderManualList(res.manualRules);
-      const st = res.stats || {};
-      showToast(
-        `已导入 ${file.name}（${res.format}）：新增 ${st.added} 条，重复 ${st.duplicate} 条，无效 ${st.skipped} 条`
-      );
-    } else {
-      showToast(res.error || "导入失败");
-    }
-    els.fileInput.value = "";
-  };
-  reader.onerror = () => {
-    showToast("文件读取失败");
-    els.fileInput.value = "";
-  };
-  reader.readAsText(file, "utf-8");
+// 打开规则管理页
+els.btnManage.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("src/rules/rules.html") });
 });
 
 // --- Toast 提示 ---
