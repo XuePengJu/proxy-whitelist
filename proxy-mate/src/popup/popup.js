@@ -1,5 +1,6 @@
 // ============================================================
-// ProxyMate - Popup 交互逻辑
+// ProxyMate - Popup 交互逻辑 (v1.1)
+// 新增：规则集（文件+手动）、文件导入
 // ============================================================
 
 const els = {
@@ -11,7 +12,18 @@ const els = {
   btnSave: document.getElementById("btn-save"),
   bypassInput: document.getElementById("bypass-input"),
   btnAdd: document.getElementById("btn-add"),
-  bypassList: document.getElementById("bypass-list")
+  bypassList: document.getElementById("bypass-list"),
+  // 规则集
+  fileRuleCard: document.getElementById("file-rule-card"),
+  fileRuleMeta: document.getElementById("file-rule-meta"),
+  fileRuleHint: document.getElementById("file-rule-hint"),
+  fileRulesToggle: document.getElementById("file-rules-toggle"),
+  rulesInput: document.getElementById("rules-input"),
+  btnAddRules: document.getElementById("btn-add-rules"),
+  btnImport: document.getElementById("btn-import"),
+  fileInput: document.getElementById("file-input"),
+  manualList: document.getElementById("manual-list"),
+  manualCount: document.getElementById("manual-count")
 };
 
 let currentSettings = null;
@@ -34,6 +46,7 @@ async function init() {
 
   currentSettings = res.settings;
   renderSettings(currentSettings);
+  renderFileRules(res.fileRules || []);
 }
 
 function renderSettings(settings) {
@@ -48,6 +61,15 @@ function renderSettings(settings) {
 
   // 白名单
   renderBypassList(settings.bypassList);
+
+  // 规则集开关
+  els.fileRulesToggle.checked = settings.fileRulesEnabled !== false;
+  renderManualList(settings.manualRules || []);
+
+  // 代理错误提示
+  if (settings.lastError) {
+    showToast(settings.lastError, 4000);
+  }
 }
 
 function updateStatusText(enabled) {
@@ -60,7 +82,54 @@ function updateStatusText(enabled) {
   }
 }
 
-// --- 白名单渲染 ---
+// --- 规则文件渲染 ---
+
+function renderFileRules(fileRules) {
+  const meta = els.fileRuleMeta;
+  const hint = els.fileRuleHint;
+
+  if (currentSettings.fileRulesEnabled === false) {
+    meta.textContent = "已停用（可在下方重新开启）";
+    meta.className = "file-rule-meta warn";
+    return;
+  }
+
+  if (!fileRules || fileRules.length === 0) {
+    meta.textContent = "未找到规则或文件为空（规则集已置空）";
+    meta.className = "file-rule-meta warn";
+    hint.textContent = "编辑 proxy-mate/rules/cn-direct.txt 后重开本弹窗即生效";
+    return;
+  }
+
+  meta.textContent = `${fileRules.length} 条规则已加载 · 命中即直连不走代理`;
+  meta.className = "file-rule-meta ok";
+}
+
+// --- 手动规则渲染 ---
+
+function renderManualList(list) {
+  els.manualList.innerHTML = "";
+  els.manualCount.textContent = `${list.length} 条`;
+
+  if (!list || list.length === 0) {
+    els.manualList.innerHTML = `<div class="bypass-empty">暂无手动规则</div>`;
+    return;
+  }
+
+  for (const rule of list) {
+    const tag = document.createElement("div");
+    tag.className = "bypass-tag rules-tag";
+    const label = rule.type === "domain" ? "=" + rule.value : rule.value;
+    tag.innerHTML = `
+      <span>${escapeHtml(label)}</span>
+      <button class="remove" title="删除">&times;</button>
+    `;
+    tag.querySelector(".remove").addEventListener("click", () => removeRule(rule));
+    els.manualList.appendChild(tag);
+  }
+}
+
+// --- 白名单渲染（原有） ---
 
 function renderBypassList(list) {
   els.bypassList.innerHTML = "";
@@ -97,6 +166,9 @@ els.toggle.addEventListener("change", async () => {
   if (res.success) {
     currentSettings = { ...currentSettings, enabled: res.enabled };
     updateStatusText(res.enabled);
+  } else {
+    showToast(res.error || "操作失败");
+    els.toggle.checked = !enabled;
   }
 });
 
@@ -123,7 +195,7 @@ els.btnSave.addEventListener("click", async () => {
   }
 });
 
-// 添加白名单
+// 添加白名单（原有）
 async function addBypass() {
   const raw = els.bypassInput.value.trim();
   if (!raw) return;
@@ -152,9 +224,93 @@ async function removeBypass(domain) {
   }
 }
 
+// --- 规则集事件 ---
+
+// 添加手动规则（多行）
+async function addRules() {
+  const text = els.rulesInput.value.trim();
+  if (!text) {
+    showToast("请先输入规则");
+    return;
+  }
+  const res = await send("ADD_RULES", { text });
+  if (res.success) {
+    els.rulesInput.value = "";
+    currentSettings = { ...currentSettings, manualRules: res.manualRules };
+    renderManualList(res.manualRules);
+    showToast("已添加到规则集");
+  } else {
+    showToast(res.error || "添加失败");
+  }
+}
+
+els.btnAddRules.addEventListener("click", addRules);
+els.rulesInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) addRules();
+});
+
+// 删除手动规则
+async function removeRule(rule) {
+  const res = await send("REMOVE_RULE", { type: rule.type, value: rule.value });
+  if (res.success) {
+    currentSettings = { ...currentSettings, manualRules: res.manualRules };
+    renderManualList(res.manualRules);
+  }
+}
+
+// 文件规则开关
+els.fileRulesToggle.addEventListener("change", async () => {
+  const enabled = els.fileRulesToggle.checked;
+  const res = await send("TOGGLE_FILE_RULES", { enabled });
+  if (res.success) {
+    currentSettings = { ...currentSettings, fileRulesEnabled: res.fileRulesEnabled };
+    // 重新读取文件状态渲染
+    const st = await send("GET_STATE");
+    if (st.success) {
+      currentSettings = { ...currentSettings, ...st.settings, manualRules: currentSettings.manualRules };
+      renderFileRules(st.fileRules || []);
+    } else {
+      renderFileRules([]);
+    }
+    showToast(res.fileRulesEnabled ? "规则文件已启用" : "规则文件已停用");
+  } else {
+    els.fileRulesToggle.checked = !enabled;
+  }
+});
+
+// 导入文件
+els.btnImport.addEventListener("click", () => els.fileInput.click());
+
+els.fileInput.addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const text = ev.target.result;
+    const res = await send("IMPORT_RULES", { text });
+    if (res.success) {
+      currentSettings = { ...currentSettings, manualRules: res.manualRules };
+      renderManualList(res.manualRules);
+      const st = res.stats || {};
+      showToast(
+        `已导入 ${file.name}（${res.format}）：新增 ${st.added} 条，重复 ${st.duplicate} 条，无效 ${st.skipped} 条`
+      );
+    } else {
+      showToast(res.error || "导入失败");
+    }
+    els.fileInput.value = "";
+  };
+  reader.onerror = () => {
+    showToast("文件读取失败");
+    els.fileInput.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+});
+
 // --- Toast 提示 ---
 
-function showToast(message) {
+function showToast(message, duration = 2000) {
   const existing = document.querySelector(".toast");
   if (existing) existing.remove();
 
@@ -173,6 +329,8 @@ function showToast(message) {
     font-size: 12px;
     z-index: 1000;
     animation: fadeIn 0.2s ease;
+    max-width: 280px;
+    text-align: center;
   `;
   document.body.appendChild(toast);
 
@@ -180,7 +338,7 @@ function showToast(message) {
     toast.style.opacity = "0";
     toast.style.transition = "opacity 0.3s";
     setTimeout(() => toast.remove(), 300);
-  }, 2000);
+  }, duration);
 }
 
 // --- 启动 ---

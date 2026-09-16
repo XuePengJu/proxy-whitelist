@@ -7,7 +7,12 @@ const DEFAULTS = {
   scheme: "socks5",
   host: "127.0.0.1",
   port: 7897,
-  bypassList: ["<local>"]
+  bypassList: ["<local>"],
+  // 规则集（v1.1）
+  fileRulesEnabled: true,   // 是否启用规则文件（rules/cn-direct.txt）中的规则
+  manualRules: [],          // 手动输入/文件导入的规则条目 [{type,value}]
+  fileRulesKey: "",         // 规则文件内容指纹（用于检测文件变化）
+  lastError: null           // 最近一次代理错误（Popup 展示）
 };
 
 export async function getSettings() {

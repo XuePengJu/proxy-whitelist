@@ -350,3 +350,166 @@ body {
   background: #cbd5e1;
   border-radius: 2px;
 }
+
+/* ============================================================
+   Ruleset Section (v1.1)
+   ============================================================ */
+
+.ruleset-section {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+/* 文件规则卡片 */
+.file-rule-card {
+  background: #fafaff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.file-rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.file-rule-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3730a3;
+}
+
+.file-rule-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.file-rule-meta.ok {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.file-rule-meta.warn {
+  color: #d97706;
+}
+
+.file-rule-hint {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 8px;
+  line-height: 1.4;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 6px;
+}
+
+/* 小号 toggle（规则集开关） */
+.toggle-sm {
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle-sm .toggle-slider::before {
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.toggle-sm input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+/* 多行输入 */
+.ruleset-section textarea {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  resize: vertical;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+}
+
+.ruleset-section textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.ruleset-section textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* 次级按钮 */
+.btn-ghost {
+  flex: 1;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+
+.btn-import {
+  color: #3730a3;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.btn-import:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+/* 子标题 */
+.sub-title {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 4px 0 6px;
+}
+
+.count-badge {
+  margin-left: 6px;
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* 规则标签（可删） */
+.rules-tag .remove:hover {
+  color: var(--danger);
+  background: #fee2e2;
+}
