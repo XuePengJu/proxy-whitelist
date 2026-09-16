@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ProxyMate",
   "version": "1.0.0",
-  "description": "白名单直连模式：白名单内域名走直连（不走代理），其余流量走本地 Clash 代理。内置 160+ 国内大厂 / AI 厂商域名规则",
+  "description": "白名单走直连：白名单内域名不走代理（直连），其余流量走本地 Clash 代理。内置 160+ 国内大厂与 AI 厂商域名",
   "permissions": [
     "proxy",
     "storage"
