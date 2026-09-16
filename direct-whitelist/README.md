@@ -1,83 +1,41 @@
-# ProxyMate
+# ProxyMate — 白名单走直连
 
-一键切换浏览器代理到本地 Clash，支持规则集（国内域名直连）与域名白名单。
+Chrome MV3 代理插件：**白名单内域名走直连**（不走代理），其余流量走本地 Clash 代理。
+
+> 与 ClashMate（白名单走代理）方向相反：ProxyMate 用于"国内域名直连、其余走代理"。
 
 ## 功能
 
 - **一键开关**：点击图标即可启用/关闭代理
-- **规则集（v1.1）**：
-  - 自动读取扩展内置 `rules/cn-direct.txt` 规则文件，命中的域名/IP 直接连接不走代理（文件不存在则规则集置空）
-  - 支持手动输入批量规则（每行一条）
-  - 支持文件导入：`.txt` / Clash RuleSet YAML / Clash List / `.json`，自动识别格式
-- **域名白名单**：自定义哪些域名不走代理
-- **灵活配置**：支持修改代理协议和端口
-- **状态指示**：图标和 Badge 实时显示代理状态
+- **白名单走直连**：规则文件 `rules/cn-direct.txt`，内置 **160+** 条国内大厂 / AI 模型厂商域名（DeepSeek、GLM、Kimi、豆包、千问办公、Qoder CN 等）
+- **手动添加**：弹窗/规则管理页直接添加域名
+- **文件导入**：支持 txt / clash / json 格式自动识别
+- **独立规则管理页**：统一列表、来源徽标、一键复制完整清单
 
 ## 安装
 
-1. 打开 Chrome 扩展管理页面：`chrome://extensions/`
+1. 打开 `chrome://extensions/`
 2. 开启右上角「开发者模式」
 3. 点击「加载已解压的扩展程序」
-4. 选择本文件夹（`proxy-mate/`）
+4. 选择本目录（`direct-whitelist/`）
 
 ## 使用
 
 1. 确保本地 Clash 已运行（默认端口 7897）
-2. 点击浏览器工具栏 ProxyMate 图标，打开开关即可连接代理
-3. **规则文件**：编辑 `rules/cn-direct.txt`（每行一条规则），保存后重开弹窗即自动生效
-4. **手动规则/导入文件**：在「国内域名直连规则集」中输入或导入
-
-### 规则文件格式（rules/cn-direct.txt）
-
-```
-# 注释以 # 开头
-baidu.com          # 匹配该域名及所有子域
-=example.com       # 仅匹配该域名本身
-*.taobao.com       # 通配符
-223.5.5.0/24       # IP 段（仅对 IP 字面量生效）
-114.114.114.114    # 单个 IP
-```
-
-文件导入额外支持 Clash 格式：`DOMAIN-SUFFIX,baidu.com`、`DOMAIN,example.com`、`IP-CIDR,1.2.3.0/24,no-resolve`（YAML 的 `payload:` 列表或逐行 List）。
-
-## 技术栈
-
-- Chrome Manifest V3
-- Service Worker
-- chrome.proxy API（PAC 脚本模式）
-- chrome.storage.local
+2. 打开开关，白名单外流量走代理
+3. 需要国内网站/厂商直连时，把域名加进白名单（或直接编辑 `rules/cn-direct.txt`）
 
 ## 目录结构
 
 ```
-proxy-mate/
+direct-whitelist/
 ├── manifest.json
-├── rules/
-│   └── cn-direct.txt        # 国内域名直连规则（默认读取）
 ├── icons/
-│   ├── icon-16.png
-│   ├── icon-32.png
-│   ├── icon-48.png
-│   ├── icon-128.png
-│   ├── icon-on-16.png
-│   ├── icon-on-32.png
-│   ├── icon-off-16.png
-│   └── icon-off-32.png
-├── src/
-│   ├── background/
-│   │   └── service-worker.js
-│   ├── popup/
-│   │   ├── popup.html
-│   │   ├── popup.css
-│   │   └── popup.js
-│   ├── rules/
-│   │   ├── rules.html        # 独立规则管理页（v1.3）
-│   │   ├── rules.css
-│   │   └── rules.js
-│   └── utils/
-│       ├── proxy.js
-│       ├── storage.js
-│       ├── ruleset.js       # 规则解析（v1.1）
-│       └── pac.js           # PAC 编译（v1.1）
-└── README.md
+├── rules/
+│   └── cn-direct.txt
+└── src/
+    ├── background/
+    ├── popup/
+    ├── rules/
+    └── utils/
 ```
