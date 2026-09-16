@@ -156,10 +156,19 @@ async function applyProxy(enabled) {
     }
   }
 
-  await setSettings({ lastError: error || null });
+  // 应用失败：回滚启用状态，保证开关与真实生效状态一致
+  if (error) {
+    const finalEnabled = enabled ? false : enabled;
+    await setSettings({ enabled: finalEnabled, lastError: error });
+    updateIcon(finalEnabled);
+    updateBadge(finalEnabled);
+    return { success: false, error };
+  }
+
+  await setSettings({ lastError: null });
   updateIcon(enabled);
   updateBadge(enabled);
-  return { success: !error, error };
+  return { success: true, error: "" };
 }
 
 // --- 初始化：启动时恢复状态 ---

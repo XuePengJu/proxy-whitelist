@@ -99,6 +99,8 @@
       case "DOMAIN":
         return normalizeEntry("=" + value); // 精确
       case "DOMAIN-KEYWORD":
+        // PAC 要求 ASCII，中文关键词规则直接拒绝（避免污染 PAC 脚本）
+        if (!/^[\x00-\x7F]+$/.test(value)) return null;
         return { type: "wildcard", value: "*" + value + "*" };
       case "IP-CIDR":
       case "IP-CIDR6":

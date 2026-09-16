@@ -42,6 +42,8 @@
     const json = JSON.stringify({ s: S, e: E, c: C, w: W, p: proxyStr, ph: usePlainHost });
 
     // PAC 脚本：ES5 兼容（Chrome PAC 环境为 V8，支持 ES5+）
+    // NOTE: Chrome requires pacScript.data to be pure ASCII. Keep this
+    // template ASCII-only (no Chinese comments / full-width chars).
     const script = `
 var R = ${json};
 var RE_IP = /^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$/;
@@ -60,10 +62,10 @@ function FindProxyForURL(url, host) {
   var h = host.toLowerCase();
   var i, d;
 
-  // <local> 语义：无点主机名直连
+  // <local>: hostname without dot -> DIRECT
   if (R.ph && isPlainHostName(host)) return "DIRECT";
 
-  // IP 字面量 -> CIDR 匹配
+  // IP literal -> CIDR match
   if (RE_IP.test(h)) {
     for (i = 0; i < R.c.length; i++) {
       if (inCidr(h, R.c[i])) return "DIRECT";
@@ -71,17 +73,17 @@ function FindProxyForURL(url, host) {
     return R.p;
   }
 
-  // 精确匹配
+  // exact match
   if (R.e.indexOf(h) !== -1) return "DIRECT";
 
-  // 后缀匹配：逐级缩短 host 查哈希（用数组二分优化大集合）
+  // suffix match: walk host suffixes
   var parts = h.split(".");
   for (i = 0; i < parts.length - 1; i++) {
     d = parts.slice(i).join(".");
     if (R.s.indexOf(d) !== -1) return "DIRECT";
   }
 
-  // 通配符匹配（shExpMatch）
+  // wildcard match (shExpMatch)
   for (i = 0; i < R.w.length; i++) {
     if (shExpMatch(h, R.w[i])) return "DIRECT";
   }
@@ -90,7 +92,11 @@ function FindProxyForURL(url, host) {
 }
 `;
 
-    return script;
+    // 兜底：Chrome 要求 PAC 纯 ASCII，任何非 ASCII（如注释误入）一律剥离，
+    // 保证代理应用永不因字符编码失败。规则值已在 ruleset.js 校验为 ASCII，
+    // 剥离不会破坏数据。
+    const asciiScript = script.replace(/[^\x00-\x7F]/g, "");
+    return asciiScript;
   }
 
   // --- 估算 PAC 大小（字符数），用于容量提示 ---
