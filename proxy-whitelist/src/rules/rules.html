@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClashMate 规则管理</title>
+  <link rel="stylesheet" href="rules.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea"/>
+            <stop offset="100%" style="stop-color:#764ba2"/>
+          </linearGradient>
+        </defs>
+        <g transform="translate(16,16)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+          <circle cx="-5" cy="-3" r="4.5"/>
+          <circle cx="5" cy="-3" r="4.5"/>
+          <circle cx="0" cy="5" r="4.5"/>
+          <line x1="-5" y1="-3" x2="5" y2="-3"/>
+          <line x1="-5" y1="-3" x2="0" y2="5"/>
+          <line x1="5" y1="-3" x2="0" y2="5"/>
+        </g>
+      </svg>
+      <span>ClashMate 规则管理</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- 添加走代理域名 -->
+    <div class="card">
+      <div class="section-title">添加走代理域名</div>
+      <div class="add-row">
+        <input type="text" id="rule-input" placeholder="如 google.com / =example.com / 223.5.5.0/24 / *.qq.com" maxlength="256">
+        <button class="btn-primary" id="btn-add">添加</button>
+      </div>
+      <div class="hint">支持格式：google.com（含子域）/ =example.com（仅本域）/ *.qq.com（通配）/ 223.5.5.0/24 / 114.114.114.114；支持一次粘贴多行</div>
+      <div class="btn-row">
+        <button class="btn-ghost" id="btn-copy">📋 复制完整清单</button>
+        <button class="btn-ghost btn-import" id="btn-import">📥 导入文件（.txt / Clash YAML / .list / .json）</button>
+        <input type="file" id="file-input" accept=".txt,.yaml,.yml,.list,.json" hidden>
+      </div>
+      <div class="hint" id="copy-hint" style="display:none;color:#059669;">已复制，可粘贴到 rules/proxy-whitelist.txt 保存统一管理</div>
+    </div>
+
+    <!-- 代理白名单 -->
+    <div class="card">
+      <div class="section-title">代理白名单 <span class="count-badge" id="total-count">0 条</span></div>
+      <div class="meta" id="list-meta">加载中…</div>
+      <div class="rule-list" id="rule-list">
+        <div class="empty">加载中…</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="rules.js"></script>
+</body>
+</html>

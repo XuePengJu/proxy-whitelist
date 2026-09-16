@@ -2,7 +2,6 @@
 .DS_Store
 
 # 打包产物
-proxy-mate.zip
 *.zip
 
 # 开发工具工作目录（豆包工作台记忆等）
