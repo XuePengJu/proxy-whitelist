@@ -154,6 +154,13 @@ body {
   line-height: 1.5;
 }
 
+.file-open-hint {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  color: var(--text-muted);
+}
+
 .btn-row {
   display: flex;
   gap: 8px;
