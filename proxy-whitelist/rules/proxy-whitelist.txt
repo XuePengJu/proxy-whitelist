@@ -22,3 +22,10 @@ githubusercontent.com
 
 # --- LangChain / LangSmith（AI 开发监控平台） ---
 langchain.com
+
+# --- Google（含搜索、账号、Gmail、Play、通讯录、clients6 内部 API、Fonts、静态资源） ---
+google.com
+google.com.hk
+googleapis.com
+gstatic.com
+googleusercontent.com
