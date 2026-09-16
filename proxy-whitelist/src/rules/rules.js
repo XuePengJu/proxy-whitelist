@@ -12,7 +12,10 @@ const els = {
   fileInput: document.getElementById("file-input"),
   listMeta: document.getElementById("list-meta"),
   ruleList: document.getElementById("rule-list"),
-  totalCount: document.getElementById("total-count")
+  totalCount: document.getElementById("total-count"),
+  fileRulesToggle: document.getElementById("file-rules-toggle"),
+  fileRuleStatus: document.getElementById("file-rule-status"),
+  fileRuleHint: document.getElementById("file-rule-hint")
 };
 
 let currentFileRules = [];
@@ -35,6 +38,7 @@ async function init() {
   if (!res.success) return;
   currentFileRules = res.fileRules || [];
   currentManualRules = res.settings.manualRules || [];
+  els.fileRulesToggle.checked = res.settings.fileRulesEnabled !== false;
   renderAll();
   if (res.settings.lastError) showToast(res.settings.lastError, 4000);
 }
@@ -76,8 +80,17 @@ function renderAll() {
   }
 
   const fileCount = currentFileRules.length;
-  els.listMeta.textContent = `文件规则 ${fileCount} 条（📄 rules/proxy-whitelist.txt）+ 手动 ${currentManualRules.length} 条 · 命中即走代理，其余直连`;
+  els.listMeta.textContent = `文件规则 ${fileCount} 条 + 手动 ${currentManualRules.length} 条 · 命中即走代理，其余直连`;
   els.listMeta.className = "meta";
+
+  // 文件规则状态
+  if (els.fileRulesToggle.checked) {
+    els.fileRuleStatus.textContent = `${fileCount} 条已启用`;
+    els.fileRuleStatus.classList.remove("warn");
+  } else {
+    els.fileRuleStatus.textContent = "已停用";
+    els.fileRuleStatus.classList.add("warn");
+  }
 
   for (const item of items) {
     const el = document.createElement("span");
@@ -194,6 +207,20 @@ els.fileInput.addEventListener("change", async (e) => {
     els.fileInput.value = "";
   };
   reader.readAsText(file, "utf-8");
+});
+
+// --- 文件规则开关 ---
+
+els.fileRulesToggle.addEventListener("change", async () => {
+  const enabled = els.fileRulesToggle.checked;
+  const res = await send("TOGGLE_FILE_RULES", { enabled });
+  if (res.success) {
+    await refresh();
+    showToast(res.fileRulesEnabled ? "文件规则已启用" : "文件规则已停用");
+  } else {
+    els.fileRulesToggle.checked = !enabled;
+    showToast(res.error || "操作失败");
+  }
 });
 
 // --- Toast ---

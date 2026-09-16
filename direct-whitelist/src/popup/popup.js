@@ -11,9 +11,6 @@ const els = {
   port: document.getElementById("proxy-port"),
   btnSave: document.getElementById("btn-save"),
   // 规则集
-  fileRuleMeta: document.getElementById("file-rule-meta"),
-  fileRuleHint: document.getElementById("file-rule-hint"),
-  fileRulesToggle: document.getElementById("file-rules-toggle"),
   manualCount: document.getElementById("manual-count"),
   btnManage: document.getElementById("btn-manage")
 };
@@ -42,7 +39,9 @@ async function init() {
 
   currentSettings = res.settings;
   renderSettings(currentSettings);
-  renderFileRules(res.fileRules || []);
+  // 规则合计 = 文件规则 + 手动规则
+  const total = (res.fileRules || []).length + (currentSettings.manualRules || []).length;
+  els.manualCount.textContent = `${total} 条`;
   readProxyState();
 }
 
@@ -52,9 +51,16 @@ function readProxyState() {
   const el = document.getElementById("proxy-state");
   try {
     chrome.proxy.settings.get({}, (d) => {
+      el.hidden = true;
       if (chrome.runtime.lastError || !d || !d.value) return;
       const v = d.value;
       const loc = d.levelOfControl || "";
+
+      // 仅在异常/警告状态才显示，正常情况不占空间
+      const takenOver = loc === "controlled_by_other_extensions";
+      const locked = loc === "not_controllable";
+      if (!takenOver && !locked) return;
+
       let text = "Chrome 实际生效：";
       if (v.mode === "pac_script" && v.pacScript && v.pacScript.data) {
         text += "PAC 已应用（规则命中直连，其余走代理）";
@@ -67,11 +73,8 @@ function readProxyState() {
       } else {
         text += v.mode || "未知";
       }
-      if (loc === "controlled_by_other_extensions") {
-        text += " ⚠ 被其他扩展接管";
-      } else if (loc === "not_controllable") {
-        text += " ⚠ 被系统/管理员控制";
-      }
+      if (takenOver) text += " ⚠ 被其他扩展接管";
+      else if (locked) text += " ⚠ 被系统/管理员控制";
       el.textContent = text;
       el.hidden = false;
     });
@@ -87,10 +90,6 @@ function renderSettings(settings) {
   els.scheme.value = settings.scheme;
   els.host.value = settings.host;
   els.port.value = settings.port;
-
-  // 规则集开关与手动规则条数
-  els.fileRulesToggle.checked = settings.fileRulesEnabled !== false;
-  els.manualCount.textContent = `${(settings.manualRules || []).length} 条`;
 
   // 代理错误提示
   if (settings.lastError) {
@@ -108,31 +107,7 @@ function updateStatusText(enabled) {
   }
 }
 
-// --- 规则文件状态渲染 ---
-
-function renderFileRules(fileRules) {
-  const meta = els.fileRuleMeta;
-  const hint = els.fileRuleHint;
-
-  // 合计条数（文件 + 手动）
-  els.manualCount.textContent = `${fileRules.length + (currentSettings.manualRules || []).length} 条`;
-
-  if (currentSettings.fileRulesEnabled === false) {
-    meta.textContent = "已停用（可在下方重新开启）";
-    meta.className = "file-rule-meta warn";
-    return;
-  }
-
-  if (!fileRules || fileRules.length === 0) {
-    meta.textContent = "未找到规则或文件为空（规则集已置空）";
-    meta.className = "file-rule-meta warn";
-    hint.textContent = "编辑 proxy-mate/rules/cn-direct.txt 后重开本弹窗即生效";
-    return;
-  }
-
-  meta.textContent = `${fileRules.length} 条规则已加载 · 命中即直连不走代理`;
-  meta.className = "file-rule-meta ok";
-}
+// --- 规则文件状态渲染已移至规则管理页 ---
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -175,25 +150,6 @@ els.btnSave.addEventListener("click", async () => {
     currentSettings = res.settings;
     updateStatusText(currentSettings.enabled);
     showToast("配置已保存");
-  }
-});
-
-// 文件规则开关
-els.fileRulesToggle.addEventListener("change", async () => {
-  const enabled = els.fileRulesToggle.checked;
-  const res = await send("TOGGLE_FILE_RULES", { enabled });
-  if (res.success) {
-    currentSettings = { ...currentSettings, fileRulesEnabled: res.fileRulesEnabled };
-    const st = await send("GET_STATE");
-    if (st.success) {
-      currentSettings = st.settings;
-      renderFileRules(st.fileRules || []);
-    } else {
-      renderFileRules([]);
-    }
-    showToast(res.fileRulesEnabled ? "规则文件已启用" : "规则文件已停用");
-  } else {
-    els.fileRulesToggle.checked = !enabled;
   }
 });
 

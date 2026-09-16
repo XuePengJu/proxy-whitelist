@@ -50,6 +50,20 @@
     <!-- 代理白名单 -->
     <div class="card">
       <div class="section-title">代理白名单 <span class="count-badge" id="total-count">0 条</span></div>
+
+      <!-- 文件规则开关 -->
+      <div class="file-rule-bar">
+        <div class="file-rule-info">
+          <span class="file-rule-name">📄 rules/proxy-whitelist.txt</span>
+          <span class="file-rule-status" id="file-rule-status">读取中…</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="file-rules-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="file-rule-hint" id="file-rule-hint">编辑 rules/proxy-whitelist.txt 后重开本页即生效</div>
+
       <div class="meta" id="list-meta">加载中…</div>
       <div class="rule-list" id="rule-list">
         <div class="empty">加载中…</div>

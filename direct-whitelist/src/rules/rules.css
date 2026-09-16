@@ -201,6 +201,87 @@ body {
 }
 
 /* --- 规则列表 --- */
+
+/* 文件规则控制条 */
+.file-rule-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fafaff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.file-rule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.file-rule-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3730a3;
+}
+.file-rule-status {
+  font-size: 11px;
+  color: #059669;
+}
+.file-rule-status.warn {
+  color: #d97706;
+}
+.file-rule-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* 小开关 */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #cbd5e1;
+  border-radius: 22px;
+  transition: background 0.3s ease;
+}
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle input:checked + .toggle-slider {
+  background: #4ade80;
+}
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
 .meta {
   font-size: 12px;
   color: var(--accent);

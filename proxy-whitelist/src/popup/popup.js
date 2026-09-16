@@ -1,22 +1,16 @@
 // ============================================================
-// ClashMate - Popup 交互逻辑 (v1.0)
-// 极简：开关 + 代理地址 + 代理白名单入口
-// 协议固定 SOCKS5，端口固定 7897
+// ClashMate - Popup 交互逻辑 (v1.1)
+// 极简：开关 + 代理配置（协议/地址/端口） + 代理白名单入口
 // ============================================================
-
-// 固定值（Clash 默认混合端口）
-const FIXED_SCHEME = "socks5";
-const FIXED_PORT = 7897;
 
 const els = {
   toggle: document.getElementById("proxy-toggle"),
   statusText: document.getElementById("status-text"),
+  scheme: document.getElementById("proxy-scheme"),
   host: document.getElementById("proxy-host"),
+  port: document.getElementById("proxy-port"),
   btnSave: document.getElementById("btn-save"),
   // 白名单
-  fileRuleMeta: document.getElementById("file-rule-meta"),
-  fileRuleHint: document.getElementById("file-rule-hint"),
-  fileRulesToggle: document.getElementById("file-rules-toggle"),
   manualCount: document.getElementById("manual-count"),
   btnManage: document.getElementById("btn-manage"),
   btnFetchPage: document.getElementById("btn-fetch-page"),
@@ -27,7 +21,6 @@ const els = {
 };
 
 let currentSettings = null;
-let currentFileRules = [];
 let fetchTimer = null;
 let fetchTicks = 0;
 
@@ -52,9 +45,10 @@ async function init() {
   if (!res.success) return;
 
   currentSettings = res.settings;
-  currentFileRules = res.fileRules || [];
   renderSettings(currentSettings);
-  renderFileRules(currentFileRules);
+  // 规则合计 = 文件规则 + 手动规则
+  const total = (res.fileRules || []).length + (currentSettings.manualRules || []).length;
+  els.manualCount.textContent = `${total} 条`;
   readProxyState();
   checkFetchState();
 }
@@ -65,9 +59,16 @@ function readProxyState() {
   const el = document.getElementById("proxy-state");
   try {
     chrome.proxy.settings.get({}, (d) => {
+      el.hidden = true;
       if (chrome.runtime.lastError || !d || !d.value) return;
       const v = d.value;
       const loc = d.levelOfControl || "";
+
+      // 仅在异常/警告状态才显示，正常情况不占空间
+      const takenOver = loc === "controlled_by_other_extensions";
+      const locked = loc === "not_controllable";
+      if (!takenOver && !locked) return;
+
       let text = "Chrome 实际生效：";
       if (v.mode === "pac_script" && v.pacScript && v.pacScript.data) {
         text += "PAC 已应用（白名单命中走代理，其余直连）";
@@ -80,11 +81,8 @@ function readProxyState() {
       } else {
         text += v.mode || "未知";
       }
-      if (loc === "controlled_by_other_extensions") {
-        text += " ⚠ 被其他扩展接管";
-      } else if (loc === "not_controllable") {
-        text += " ⚠ 被系统/管理员控制";
-      }
+      if (takenOver) text += " ⚠ 被其他扩展接管";
+      else if (locked) text += " ⚠ 被系统/管理员控制";
       el.textContent = text;
       el.hidden = false;
     });
@@ -96,12 +94,10 @@ function renderSettings(settings) {
   els.toggle.checked = settings.enabled;
   updateStatusText(settings.enabled);
 
-  // 代理地址（协议/端口固定）
+  // 代理配置
+  els.scheme.value = settings.scheme;
   els.host.value = settings.host;
-
-  // 白名单开关与手动规则条数
-  els.fileRulesToggle.checked = settings.fileRulesEnabled !== false;
-  els.manualCount.textContent = `${(settings.manualRules || []).length} 条`;
+  els.port.value = settings.port;
 
   // 代理错误提示
   if (settings.lastError) {
@@ -111,7 +107,7 @@ function renderSettings(settings) {
 
 function updateStatusText(enabled) {
   if (enabled) {
-    els.statusText.textContent = `代理已开启 · ${FIXED_SCHEME} ${currentSettings.host}:${FIXED_PORT}`;
+    els.statusText.textContent = `代理已开启 · ${currentSettings.scheme}://${currentSettings.host}:${currentSettings.port}`;
     els.statusText.classList.add("on");
   } else {
     els.statusText.textContent = "代理已关闭";
@@ -119,31 +115,7 @@ function updateStatusText(enabled) {
   }
 }
 
-// --- 白名单文件状态渲染 ---
-
-function renderFileRules(fileRules) {
-  const meta = els.fileRuleMeta;
-  const hint = els.fileRuleHint;
-
-  // 合计条数（文件 + 手动）
-  els.manualCount.textContent = `${fileRules.length + (currentSettings.manualRules || []).length} 条`;
-
-  if (currentSettings.fileRulesEnabled === false) {
-    meta.textContent = "已停用（可在下方重新开启）";
-    meta.className = "file-rule-meta warn";
-    return;
-  }
-
-  if (!fileRules || fileRules.length === 0) {
-    meta.textContent = "白名单为空（未命中任何规则时全部直连）";
-    meta.className = "file-rule-meta warn";
-    hint.textContent = "编辑 rules/proxy-whitelist.txt 后重开本弹窗即生效";
-    return;
-  }
-
-  meta.textContent = `${fileRules.length} 条规则已加载 · 命中即走代理，其余直连`;
-  meta.className = "file-rule-meta ok";
-}
+// --- 白名单文件状态渲染已移至规则管理页 ---
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -166,39 +138,26 @@ els.toggle.addEventListener("change", async () => {
   }
 });
 
-// 保存配置（协议/端口固定，只保存代理地址）
+// 保存配置（协议/地址/端口）
 els.btnSave.addEventListener("click", async () => {
+  const scheme = els.scheme.value;
   const host = els.host.value.trim();
+  const port = parseInt(els.port.value, 10);
 
   if (!host) {
     showToast("地址不能为空");
     return;
   }
+  if (!port || port < 1 || port > 65535) {
+    showToast("端口范围 1-65535");
+    return;
+  }
 
-  const res = await send("UPDATE_SETTINGS", { data: { scheme: FIXED_SCHEME, host, port: FIXED_PORT } });
+  const res = await send("UPDATE_SETTINGS", { data: { scheme, host, port } });
   if (res.success) {
     currentSettings = res.settings;
     updateStatusText(currentSettings.enabled);
     showToast("配置已保存");
-  }
-});
-
-// 白名单文件开关
-els.fileRulesToggle.addEventListener("change", async () => {
-  const enabled = els.fileRulesToggle.checked;
-  const res = await send("TOGGLE_FILE_RULES", { enabled });
-  if (res.success) {
-    currentSettings = { ...currentSettings, fileRulesEnabled: res.fileRulesEnabled };
-    const st = await send("GET_STATE");
-    if (st.success) {
-      currentSettings = st.settings;
-      renderFileRules(st.fileRules || []);
-    } else {
-      renderFileRules([]);
-    }
-    showToast(res.fileRulesEnabled ? "白名单文件已启用" : "白名单文件已停用");
-  } else {
-    els.fileRulesToggle.checked = !enabled;
   }
 });
 
@@ -344,8 +303,8 @@ async function refreshFetch() {
     const st = await send("GET_STATE");
     if (st.success) {
       currentSettings = st.settings;
-      currentFileRules = st.fileRules || [];
-      renderFileRules(currentFileRules);
+      const total = (st.fileRules || []).length + (currentSettings.manualRules || []).length;
+      els.manualCount.textContent = `${total} 条`;
     }
   }
 }
