@@ -1,17 +1,198 @@
 # ProxyMate 国内域名直连规则集
-# 插件启动时会自动拉取本文件，命中以下规则的请求将直接连接（不走代理）
+# 插件启动时会自动读取本文件，命中以下规则的请求将直接连接（不走代理）
 #
 # 格式：每行一条规则
-#   baidu.com          → 匹配该域名及所有子域
+#   baidu.com          → 匹配该域名及所有子域（后缀匹配，前后粘字不会误匹配）
 #   =example.com       → 仅匹配该域名本身（不含子域）
 #   223.5.5.0/24       → 匹配 IP 段（仅对 IP 字面量生效）
 #   114.114.114.114    → 匹配单个 IP
 #   # 开头为注释，空行忽略
 #
-# 修改后保存并推送，插件会在下次同步时生效
+# 修改后保存并推送，插件会在下次打开弹窗时自动生效
 
+# ===== 百度 =====
 baidu.com
+bdstatic.com
+bdimg.com
+bcebos.com
+baidupcs.com
+baidubce.com
+
+# ===== 阿里巴巴 =====
+alibaba.com
 taobao.com
-weibo.com
+tmall.com
+1688.com
+aliyun.com
+alipay.com
+alicdn.com
+tbcdn.cn
+dingtalk.com
+youku.com
+amap.com
+cainiao.com
+ele.me
+uc.cn
+ucweb.com
+
+# ===== 腾讯 =====
 qq.com
+tencent.com
+wechat.com
+weixin.com
+gtimg.com
+qpic.cn
+qlogo.cn
+myapp.com
+wegame.com
+
+# ===== 字节跳动 =====
+bytedance.com
+douyin.com
+toutiao.com
+ixigua.com
+huoshan.com
+volcengine.com
+feishu.cn
+larkoffice.com
+snssdk.com
+byteimg.com
+zijieapi.com
+
+# ===== 美团 =====
+meituan.com
+dianping.com
+meituan.net
+sankuai.com
+
+# ===== 京东 =====
+jd.com
+3.cn
+360buyimg.com
+jdcloud.com
+jdpay.com
+360buy.com
+jdl.com
+
+# ===== 拼多多 =====
+pinduoduo.com
+yangkeduo.com
+pddpic.com
+
+# ===== 网易 =====
+163.com
+126.com
+netease.com
+163yun.com
+126.net
+
+# ===== 新浪 / 微博 =====
+sina.com.cn
+sina.com
+weibo.com
+sinaimg.cn
+sinajs.cn
+
+# ===== 搜狐 =====
+sohu.com
+sohucs.com
+
+# ===== 360 =====
+360.cn
+qihoo.com
+qhimg.com
+qhres.com
+
+# ===== 小米 =====
+xiaomi.com
+mi.com
+miui.com
+mipay.com
+xiaomiyoupin.com
+
+# ===== 华为 =====
+huawei.com
+vmall.com
+huaweicloud.com
+hwclouds.com
+
+# ===== OPPO / vivo =====
+oppo.com
+heytap.com
+coloros.com
+vivo.com
+vivoglobal.com
+
+# ===== 联想 / 中兴 / 大疆 =====
+lenovo.com
+lenovo.com.cn
+zte.com.cn
+dji.com
+
+# ===== B站 =====
+bilibili.com
+hdslb.com
+b23.tv
+
+# ===== 快手 =====
+kuaishou.com
+gifshow.com
+
+# ===== 爱奇艺 =====
+iqiyi.com
+qiyi.com
+iqiyipic.com
+
+# ===== 知乎 =====
+zhihu.com
+zhimg.com
+
+# ===== 携程系 =====
+ctrip.com
+trip.com
+qunar.com
+c-trip.com
+
+# ===== 滴滴 =====
+didiglobal.com
+xiaojukeji.com
+didialift.com
+
+# ===== 汽车之家 / 贝壳 / 58 / 唯品会 / 苏宁 =====
+autohome.com.cn
+ke.com
+lianjia.com
+58.com
+58cdn.com.cn
+vip.com
+vipstatic.com
+suning.com
+
+# ===== 米哈游 =====
+mihoyo.com
+hoyoverse.com
+
+# ===== 运营商 =====
+10086.cn
+10010.com
+189.cn
+
+# ===== 银行 =====
+icbc.com.cn
+ccb.com
+abcchina.com
+boc.cn
+cmbchina.com
+
+# ===== 快递物流 =====
+sf-express.com
+zto.com
+yto.net.cn
+yundaex.com
+sto.cn
+
+# ===== 12306 / 主要媒体 =====
 12306.cn
+cctv.com
+xinhuanet.com
+people.com.cn
